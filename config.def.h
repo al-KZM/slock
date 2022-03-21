@@ -14,3 +14,6 @@ static const int failonclear = 1;
 
 /* PAM service that's used for authentication */
 static const char* pam_service = "login";
+
+/* time in seconds before the monitor shuts down */
+static const int monitortime = 5;
