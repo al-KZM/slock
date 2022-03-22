@@ -183,22 +183,28 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 		if (ev.type == KeyPress) {
 			explicit_bzero(&buf, sizeof(buf));
 			num = XLookupString(&ev.xkey, buf, sizeof(buf), &ksym, 0);
+      // Handle NumPad input (reconvert it to normal input)
 			if (IsKeypadKey(ksym)) {
 				if (ksym == XK_KP_Enter)
 					ksym = XK_Return;
 				else if (ksym >= XK_KP_0 && ksym <= XK_KP_9)
 					ksym = (ksym - XK_KP_0) + XK_0;
 			}
+
+      // Ignore special keys
 			if (IsFunctionKey(ksym) ||
 			    IsKeypadKey(ksym) ||
 			    IsMiscFunctionKey(ksym) ||
 			    IsPFKey(ksym) ||
 			    IsPrivateKeypadKey(ksym))
 				continue;
+
 			switch (ksym) {
-			case XK_Return:
+			case XK_Return: // Check password
+        fprintf(stdout, "slock: Checkin password");
 				passwd[len] = '\0';
 				errno = 0;
+        // Query pam
 				retval = pam_start(pam_service, hash, &pamc, &pamh);
 				color = PAM;
 				for (screen = 0; screen < nscreens; screen++) {
@@ -226,11 +232,11 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				explicit_bzero(&passwd, sizeof(passwd));
 				len = 0;
 				break;
-			case XK_Escape:
+			case XK_Escape: // Delete password buffer
 				explicit_bzero(&passwd, sizeof(passwd));
 				len = 0;
 				break;
-			case XK_BackSpace:
+			case XK_BackSpace: // Handle backspace
 				if (len)
 					passwd[--len] = '\0';
 				break;
@@ -436,7 +442,7 @@ main(int argc, char **argv) {
 #ifdef BLUR
 
 	/*Blur function*/
-	imlib_image_blur(blurRadius);
+	imlib_image_blur(5);
 #endif // BLUR
 
 #ifdef PIXELATION
@@ -497,17 +503,17 @@ main(int argc, char **argv) {
 	if (nlocks != nscreens)
 		return 1;
 
-	/* DPMS magic to disable the monitor */
-	if (!DPMSCapable(dpy))
-		die("slock: DPMSCapable failed\n");
-	if (!DPMSEnable(dpy))
-		die("slock: DPMSEnable failed\n");
-	if (!DPMSGetTimeouts(dpy, &standby, &suspend, &off))
-		die("slock: DPMSGetTimeouts failed\n");
-	if (!standby || !suspend || !off)
-		die("slock: at least one DPMS variable is zero\n");
-	if (!DPMSSetTimeouts(dpy, monitortime, monitortime, monitortime))
-		die("slock: DPMSSetTimeouts failed\n");
+	/* /1* DPMS magic to disable the monitor *1/ */
+	/* if (!DPMSCapable(dpy)) */
+	/* 	die("slock: DPMSCapable failed\n"); */
+	/* if (!DPMSEnable(dpy)) */
+	/* 	die("slock: DPMSEnable failed\n"); */
+	/* if (!DPMSGetTimeouts(dpy, &standby, &suspend, &off)) */
+	/* 	die("slock: DPMSGetTimeouts failed\n"); */
+	/* if (!standby || !suspend || !off) */
+	/* 	die("slock: at least one DPMS variable is zero\n"); */
+	/* if (!DPMSSetTimeouts(dpy, monitortime, monitortime, monitortime)) */
+	/* 	die("slock: DPMSSetTimeouts failed\n"); */
 
 	XSync(dpy, 0);
 
